@@ -51,6 +51,7 @@ export default function ReviewUI({ business }: { business: Business }) {
         alert("Failed to generate review.");
       }
     } catch (error) {
+      console.error(error);
       alert("An error occurred while generating the review.");
     } finally {
       setIsGenerating(false);
@@ -76,6 +77,7 @@ export default function ReviewUI({ business }: { business: Business }) {
         alert("Failed to submit feedback.");
       }
     } catch (error) {
+      console.error(error);
       alert("An error occurred.");
     } finally {
       setIsSubmitting(false);
@@ -153,7 +155,7 @@ export default function ReviewUI({ business }: { business: Business }) {
               >
                 <div className="p-1 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl shadow-indigo-500/10">
                   <div className="bg-white rounded-xl p-6 text-left relative">
-                    <p className="text-gray-700 text-lg leading-relaxed font-medium">"{aiReview}"</p>
+                    <p className="text-gray-700 text-lg leading-relaxed font-medium">&quot;{aiReview}&quot;</p>
                   </div>
                 </div>
 
@@ -198,12 +200,12 @@ export default function ReviewUI({ business }: { business: Business }) {
                 className="space-y-6 pt-4"
               >
                 <div className="p-4 bg-red-50/50 rounded-xl border border-red-100 mb-4 text-left">
-                  <p className="text-red-800 text-sm">We're sorry to hear that. This feedback will be sent directly to our team so we can improve.</p>
+                  <p className="text-red-800 text-sm">We&apos;re sorry to hear that. This feedback will be sent directly to our team so we can improve.</p>
                 </div>
                 
                 <div className="p-1 bg-gradient-to-br from-gray-300 to-gray-400 rounded-2xl shadow-xl">
                   <div className="bg-white rounded-xl p-6 text-left relative">
-                    <p className="text-gray-700 text-lg leading-relaxed font-medium">"{aiReview}"</p>
+                    <p className="text-gray-700 text-lg leading-relaxed font-medium">&quot;{aiReview}&quot;</p>
                   </div>
                 </div>
 

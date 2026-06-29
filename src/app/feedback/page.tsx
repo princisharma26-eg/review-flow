@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Star, Trash2, Search, Lock } from "lucide-react";
@@ -141,7 +141,7 @@ export default function FeedbackPage() {
                   </button>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl mb-4">
-                  <p className="text-gray-700 text-sm">"{item.aiReview}"</p>
+                  <p className="text-gray-700 text-sm">&quot;{item.aiReview}&quot;</p>
                 </div>
                 <div className="text-xs text-gray-400">
                   {new Date(item.createdAt).toLocaleDateString(undefined, {
