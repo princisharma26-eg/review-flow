@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error generating review:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to generate review" },
+      { success: false, error: error instanceof Error ? error.message : "Failed to generate review" },
       { status: 500 }
     );
   }
