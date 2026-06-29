@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating business:", error);
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      { success: false, error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
