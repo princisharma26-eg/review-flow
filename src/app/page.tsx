@@ -1,103 +1,208 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
+import { Download, Link as LinkIcon, ExternalLink } from "lucide-react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [businessName, setBusinessName] = useState("");
+  const [googleLink, setGoogleLink] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reviewUrl, setReviewUrl] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const qrRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    setReviewUrl(null);
+
+    try {
+      const res = await fetch("/api/business", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: businessName, googleReviewLink: googleLink }),
+      });
+      const data = await res.json();
+      if (data.success && data.business) {
+        setReviewUrl(`${origin}/review/${data.business.id}`);
+      }
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const downloadQR = (format: "png" | "svg") => {
+    if (!qrRef.current) return;
+    const svg = qrRef.current;
+    const svgData = new XMLSerializer().serializeToString(svg);
+
+    if (format === "svg") {
+      const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `qr-code-${businessName.toLowerCase().replace(/\s+/g, "-")}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        if (ctx) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        }
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `qr-code-${businessName.toLowerCase().replace(/\s+/g, "-")}.png`;
+        downloadLink.href = `${pngFile}`;
+        downloadLink.click();
+      };
+      img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center"
+      >
+        <div className="space-y-8 p-6 md:p-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4">
+              ReviewFlow AI
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Generate smart QR codes that capture private feedback and boost public Google Reviews.
+            </p>
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20">
+            <form onSubmit={handleGenerate} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="businessName" className="text-gray-700 font-medium">Business Name</Label>
+                <Input
+                  id="businessName"
+                  placeholder="e.g. Acme Corp"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                  className="bg-white/80 border-gray-200 focus:border-indigo-500 rounded-xl h-12"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="googleLink" className="text-gray-700 font-medium">Google Review Link</Label>
+                <Input
+                  id="googleLink"
+                  placeholder="https://g.page/r/..."
+                  type="url"
+                  value={googleLink}
+                  onChange={(e) => setGoogleLink(e.target.value)}
+                  required
+                  className="bg-white/80 border-gray-200 focus:border-indigo-500 rounded-xl h-12"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                disabled={isGenerating}
+                className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-xl shadow-lg shadow-gray-900/20 transition-all text-base font-medium"
+              >
+                {isGenerating ? "Generating..." : "Generate QR"}
+              </Button>
+            </form>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="flex items-center justify-center p-6 md:p-8">
+          <AnimatePresence mode="wait">
+            {reviewUrl ? (
+              <motion.div 
+                key="qr-code"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center w-full max-w-sm"
+              >
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-1 rounded-2xl mb-6 shadow-inner">
+                  <div className="bg-white p-4 rounded-xl">
+                    <QRCodeSVG
+                      value={reviewUrl}
+                      size={200}
+                      level={"H"}
+                      includeMargin={false}
+                      ref={qrRef}
+                      className="w-full h-auto"
+                    />
+                  </div>
+                </div>
+                
+                <div className="w-full space-y-4">
+                  <div className="flex items-center justify-between text-sm text-gray-500 bg-gray-50 px-4 py-3 rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <LinkIcon className="w-4 h-4 flex-shrink-0" />
+                      <a href={reviewUrl} target="_blank" rel="noopener noreferrer" className="truncate hover:underline text-indigo-600 font-medium">
+                        {reviewUrl}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      onClick={() => downloadQR("png")}
+                      variant="outline"
+                      className="w-full rounded-xl border-gray-200 hover:bg-gray-50 font-medium"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      PNG
+                    </Button>
+                    <Button 
+                      onClick={() => downloadQR("svg")}
+                      variant="outline"
+                      className="w-full rounded-xl border-gray-200 hover:bg-gray-50 font-medium"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      SVG
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="placeholder"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-full max-w-sm aspect-square rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 bg-white/30 backdrop-blur-sm"
+              >
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <ExternalLink className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="font-medium text-gray-500">Your QR code will appear here</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
     </div>
   );
 }
