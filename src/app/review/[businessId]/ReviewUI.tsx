@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Copy, RefreshCw, ExternalLink, CheckCircle2, Pencil } from "lucide-react";
+import { Star, Copy, RefreshCw, ExternalLink, CheckCircle2 } from "lucide-react";
 
 interface Business {
   id: string;
@@ -23,7 +23,6 @@ export default function ReviewUI({ business }: { business: Business }) {
   const [aiReview, setAiReview] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
   const handleRating = async (val: number) => {
     setRating(val);
@@ -31,7 +30,6 @@ export default function ReviewUI({ business }: { business: Business }) {
     // Reset states
     setSubmitted(false);
     setAiReview("");
-    setIsEditing(false);
     
     // Always generate review, whether high or low rating
     await generateReview(val);
@@ -156,39 +154,21 @@ export default function ReviewUI({ business }: { business: Business }) {
                 className="space-y-6 pt-4"
               >
                 <div className="p-1 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl shadow-indigo-500/10">
-                  <div className={`bg-white rounded-xl p-6 text-left relative transition-all ${isEditing ? 'ring-2 ring-indigo-400 ring-offset-2' : ''}`}>
-                    <textarea 
-                      readOnly={!isEditing}
-                      value={aiReview}
-                      onChange={(e) => setAiReview(e.target.value)}
-                      className="w-full text-gray-700 text-lg leading-relaxed font-medium bg-transparent outline-none resize-none min-h-[120px]"
-                      placeholder="Your review will appear here..."
-                      autoFocus={isEditing}
-                      onBlur={() => setIsEditing(false)}
-                    />
+                  <div className="bg-white rounded-xl p-6 text-left relative">
+                    <p className="text-gray-700 text-lg leading-relaxed font-medium">&quot;{aiReview}&quot;</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => generateReview(rating)}
-                        className="rounded-xl border-gray-200 hover:bg-gray-50 px-2"
-                        title="Generate Another"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant={isEditing ? "default" : "outline"}
-                        onClick={() => setIsEditing(!isEditing)}
-                        className="rounded-xl border-gray-200 hover:bg-gray-50 px-2"
-                        title={isEditing ? "Done Editing" : "Edit Review"}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => generateReview(rating)}
+                      className="rounded-xl border-gray-200 hover:bg-gray-50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Generate Another
+                    </Button>
                     <Button 
                       variant={copied ? "secondary" : "outline"}
                       onClick={copyToClipboard}
@@ -224,21 +204,12 @@ export default function ReviewUI({ business }: { business: Business }) {
                 </div>
                 
                 <div className="p-1 bg-gradient-to-br from-gray-300 to-gray-400 rounded-2xl shadow-xl">
-                  <div className={`bg-white rounded-xl p-6 text-left relative transition-all ${isEditing ? 'ring-2 ring-gray-400 ring-offset-2' : ''}`}>
-                    <textarea 
-                      readOnly={!isEditing}
-                      value={aiReview}
-                      onChange={(e) => setAiReview(e.target.value)}
-                      className="w-full text-gray-700 text-lg leading-relaxed font-medium bg-transparent outline-none resize-none min-h-[120px]"
-                      placeholder="Your feedback will appear here..."
-                      autoFocus={isEditing}
-                      onBlur={() => setIsEditing(false)}
-                    />
+                  <div className="bg-white rounded-xl p-6 text-left relative">
+                    <p className="text-gray-700 text-lg leading-relaxed font-medium">&quot;{aiReview}&quot;</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-2 gap-3">
                     <Button 
                       variant="outline" 
                       onClick={() => generateReview(rating)}
@@ -247,15 +218,6 @@ export default function ReviewUI({ business }: { business: Business }) {
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Generate Another
                     </Button>
-                    <Button 
-                      variant={isEditing ? "secondary" : "outline"}
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="rounded-xl border-gray-200 hover:bg-gray-50"
-                    >
-                      <Pencil className="w-4 h-4 mr-2" />
-                      {isEditing ? 'Done Editing' : 'Edit Review'}
-                    </Button>
-                  </div>
                   <Button 
                     onClick={submitFeedback}
                     disabled={isSubmitting}
